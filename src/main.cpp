@@ -3,10 +3,10 @@
 
 int main() {
     try {
-        MemoryMapped file("C:/tmp/sample.avi");
+        MemoryMapped file("data.dat");
 
         for (uint64_t c = 0; c < file.size(); ++c) {
-            file[c] = 0;
+            file[c] = 'r';
         }
 
         file.flush();
