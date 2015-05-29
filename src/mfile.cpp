@@ -146,9 +146,13 @@ void MemoryMapped::map(uint64_t from)
 
 void MemoryMapped::touchPage(PageIndex idx)
 {
-    for (int c = 0; c < MemoryMapped::pageCount - 1; ++c) {
+    // start from last used - better nop
+    for (int c = MemoryMapped::pageCount - 1; c >= 0; --c) {
         if (idx == m_PageUse[c]) {
-            std::swap(m_PageUse[c], m_PageUse[c + 1]);
+            for (int r = c; r < MemoryMapped::pageCount - 1; ++r) {
+                std::swap(m_PageUse[r], m_PageUse[r + 1]);
+            }
+            break;
         }
     }
 }
