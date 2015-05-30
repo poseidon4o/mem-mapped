@@ -7,11 +7,24 @@
 #include <string>
 #include <memory>
 
+class PageItemProxy {
+public:
+    PageItemProxy() = delete;
+    PageItemProxy(const PageItemProxy &) = delete;
+    PageItemProxy & operator=(const PageItemProxy &) = delete;
+    PageItemProxy * operator&() = delete;
+
+    PageItemProxy & operator=(const uint8_t & value);
+    operator uint8_t();
+};
+
+
 class MemoryPage {
     friend class MemoryMapped;
+    friend class PageItemProxy;
 
-    uint8_t & relative(uint64_t idx);
-    uint8_t & absolute(uint64_t idx);
+    PageItemProxy & relative(uint64_t idx);
+    PageItemProxy & absolute(uint64_t idx);
 
     int size() const;
     bool dirty() const;
@@ -28,11 +41,14 @@ class MemoryPage {
 private:
     uint8_t * m_Data;
     int m_Size, m_Start;
-    const int m_Capacity;
+
+    // Since this is single threaded use only we can store the last access index
+    // and the proxy can be zero-sized
+    int m_ProxyIndex;
 
     struct {
         uint8_t m_Dirty : 1;
-    uint8_t: 7;
+        uint8_t: 7;
     };
 };
 
@@ -47,7 +63,7 @@ public:
     MemoryMapped(const MemoryMapped &) = delete;
     MemoryMapped & operator=(const MemoryMapped &) = delete;
 
-    uint8_t & operator[](uint64_t index);
+    PageItemProxy & operator[](uint64_t index);
     void flush();
 
     const uint64_t size() const;

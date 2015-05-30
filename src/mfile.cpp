@@ -2,8 +2,22 @@
 #include <algorithm>
 
 
+PageItemProxy & PageItemProxy::operator=(const uint8_t & value)
+{
+    MemoryPage & page = reinterpret_cast<MemoryPage&>(*this);
+    page.m_Data[page.m_ProxyIndex] = value;
+    return *this;
+}
+
+PageItemProxy::operator uint8_t()
+{
+    MemoryPage & page = reinterpret_cast<MemoryPage&>(*this);
+    return page.m_Data[page.m_ProxyIndex];
+}
+
+
 MemoryPage::MemoryPage() :
-    m_Data(nullptr), m_Size(0), m_Start(0), m_Capacity(0), m_Dirty(0)
+    m_Data(nullptr), m_Size(0), m_Start(0), m_Dirty(0)
 {
 }
 
@@ -34,13 +48,14 @@ uint8_t *& MemoryPage::data()
     return m_Data;
 }
 
-uint8_t & MemoryPage::relative(uint64_t idx)
+PageItemProxy & MemoryPage::relative(uint64_t idx)
 {
     m_Dirty = 1;
-    return m_Data[idx];
+    m_ProxyIndex = idx;
+    return reinterpret_cast<PageItemProxy&>(*this);
 }
 
-uint8_t & MemoryPage::absolute(uint64_t idx)
+PageItemProxy & MemoryPage::absolute(uint64_t idx)
 {
     return relative(idx - m_Start);
 }
@@ -79,7 +94,7 @@ MemoryMapped::~MemoryMapped()
     fclose(m_File);
 }
 
-uint8_t & MemoryMapped::operator[](uint64_t index)
+PageItemProxy & MemoryMapped::operator[](uint64_t index)
 {
     PageIndex page = indexToPage(index);
     if (page == InvalidPage) {
