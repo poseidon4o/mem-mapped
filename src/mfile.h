@@ -70,7 +70,7 @@ public:
 
 
 
-    const static int pageSize = 64;
+    const static int pageSize = 4096;
     const static int pageCount = 8;
 protected:
     void map(uint64_t from);

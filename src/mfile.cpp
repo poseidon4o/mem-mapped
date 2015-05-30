@@ -65,7 +65,7 @@ PageItemProxy & MemoryPage::absolute(uint64_t idx)
 MemoryMapped::MemoryMapped(const std::string fileName) :
     m_FileName(std::move(fileName)), m_File(nullptr), m_UsedPages(0)
 {
-    m_File = fopen(m_FileName.c_str(), "r+");
+    m_File = fopen(m_FileName.c_str(), "rb+");
     if (!m_File) {
         throw std::exception("Failed to load file");
     }
@@ -149,6 +149,9 @@ void MemoryMapped::map(uint64_t from)
         flushPage(pageIndex);
     }
 
+    // allign pages on pageSize so there are no overlaps
+    from = (from / MemoryMapped::pageSize) * MemoryMapped::pageSize;
+
     uint64_t mapSize = std::min<uint64_t>(MemoryMapped::pageSize, m_FileSize - from);
     page.reset(from, mapSize);
     fseek(m_File, from, SEEK_SET);
@@ -156,12 +159,12 @@ void MemoryMapped::map(uint64_t from)
     if (fread(page.data(), 1, mapSize, m_File) != mapSize) {
         throw std::exception("Failed to map file in memory");
     }
-    ++m_UsedPages;
+    m_UsedPages = std::max(m_UsedPages + 1, MemoryMapped::pageCount);
 }
 
 void MemoryMapped::touchPage(PageIndex idx)
 {
-    // start from last used - better nop
+    // start from last used - better chance of nop
     for (int c = MemoryMapped::pageCount - 1; c >= 0; --c) {
         if (idx == m_PageUse[c]) {
             for (int r = c; r < MemoryMapped::pageCount - 1; ++r) {
@@ -176,13 +179,13 @@ void MemoryMapped::touchPage(PageIndex idx)
 MemoryMapped::PageIndex MemoryMapped::mapCandidate()
 {
     return m_UsedPages >= MemoryMapped::pageCount ?
-        
+
         m_PageUse[0] :
 
         // handle the case when there is a free page
         *std::find_if(m_PageUse, m_PageUse + MemoryMapped::pageCount, [this](PageIndex idx) {
-            return !this->m_Pages[idx].dirty();
-        });
+        return !this->m_Pages[idx].dirty();
+    });
 }
 
 MemoryMapped::PageIndex MemoryMapped::indexToPage(uint64_t idx)
