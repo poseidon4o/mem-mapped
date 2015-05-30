@@ -8,7 +8,7 @@
 #include <memory>
 
 #include "mpage.h"
-
+#include "mmem.h"
 
 class MemoryMapped {
 public:
@@ -42,6 +42,8 @@ protected:
 
 
 private:
+    ChunkAllocator m_Allocator;
+
     std::string m_FileName;
     FILE * m_File;
     MemoryPage m_Pages[MemoryMapped::pageCount];

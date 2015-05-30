@@ -19,6 +19,8 @@ class MemoryPage {
     friend class MemoryMapped;
     friend class PageItemProxy;
 
+    MemoryPage();
+
     PageItemProxy & relative(uint64_t idx);
     PageItemProxy & absolute(uint64_t idx);
 
@@ -30,8 +32,6 @@ class MemoryPage {
 
     // Unsafe - does not update dirty flag
     uint8_t *& data();
-
-    MemoryPage();
 
     MemoryPage(const MemoryPage &) = delete;
     MemoryPage & operator=(const MemoryPage &) = delete;

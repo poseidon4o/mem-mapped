@@ -23,7 +23,6 @@ int main() {
     }
 
     std::cout << "done";
-    std::cin.get();
 
     return 0;
 }
