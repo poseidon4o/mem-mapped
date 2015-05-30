@@ -6,6 +6,7 @@ PageItemProxy & PageItemProxy::operator=(const uint8_t & value)
 {
     MemoryPage & page = reinterpret_cast<MemoryPage&>(*this);
     page.m_Data[page.m_ProxyIndex] = value;
+    page.m_Dirty = true;
     return *this;
 }
 
@@ -17,7 +18,7 @@ PageItemProxy::operator uint8_t()
 
 
 MemoryPage::MemoryPage() :
-    m_Data(nullptr), m_Size(0), m_Start(0), m_Dirty(0)
+    m_Data(nullptr), m_Size(0), m_Start(0), m_Dirty(false)
 {
 }
 
@@ -40,7 +41,7 @@ void MemoryPage::reset(int start, int size)
 {
     m_Start = start;
     m_Size = size;
-    m_Dirty = 0;
+    m_Dirty = false;
 }
 
 uint8_t *& MemoryPage::data()
@@ -50,7 +51,6 @@ uint8_t *& MemoryPage::data()
 
 PageItemProxy & MemoryPage::relative(uint64_t idx)
 {
-    m_Dirty = 1;
     m_ProxyIndex = idx;
     return reinterpret_cast<PageItemProxy&>(*this);
 }

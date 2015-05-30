@@ -31,6 +31,8 @@ class MemoryPage {
     uint64_t start() const;
 
     void reset(int start, int size);
+
+    // Unsafe - does not update dirty flag
     uint8_t *& data();
 
     MemoryPage();
@@ -46,10 +48,7 @@ private:
     // and the proxy can be zero-sized
     int m_ProxyIndex;
 
-    struct {
-        uint8_t m_Dirty : 1;
-        uint8_t: 7;
-    };
+    bool m_Dirty;
 };
 
 
