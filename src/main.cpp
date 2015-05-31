@@ -9,7 +9,7 @@ using namespace std::chrono;
 random_device dev;
 mt19937 rnd(dev());
 
-char writeSeed = dev() % 255;
+uniform_int_distribution<uint16_t> rndChar(0, 255);
 
 
 #define START_TEST(MESSAGE)\
@@ -67,21 +67,21 @@ END_TEST
 
 START_TEST(forward_write)
 for (uint64_t c = 0; c < fileSize; ++c) {
-    file[c] = writeSeed + c;
+    file[c] = rndChar(rnd) + c;
 }
 END_TEST
 
 START_TEST(backward_write)
 uint8_t x;
 for (uint64_t c = fileSize - 1; c > 0; --c) {
-    file[c] = writeSeed + c;
+    file[c] = rndChar(rnd) + c;
 }
 END_TEST
 
 START_TEST(stride_forward_write)
 for (int r = 0; r < 10; ++r) {
     for (uint64_t c = 0; c + r < fileSize; c += MemoryMapped::pageSize) {
-        file[c + r] = writeSeed + c;
+        file[c + r] = rndChar(rnd) + c;
     }
 }
 END_TEST
@@ -91,7 +91,7 @@ START_TEST(stride_backward_write)
 uint8_t x;
 for (int r = 0; r < 10; ++r) {
     for (uint64_t c = file.size() - 1; c - r > 0 && c - r < fileSize; c -= MemoryMapped::pageSize) {
-        file[c - r] = writeSeed + c;
+        file[c - r] = rndChar(rnd) + c;
     }
 }
 END_TEST
@@ -109,10 +109,26 @@ END_TEST
 START_TEST(random_write_100000)
 uniform_int_distribution<uint64_t> dist(0, fileSize - 1);
 for (uint64_t c = 0; c < 100000; ++c) {
-    file[dist(rnd)] = writeSeed + c;
+    file[dist(rnd)] = rndChar(rnd) + c;
 }
 END_TEST
 
+
+START_TEST(sequential_move)
+// this clever move may look random but utilizes the pagin to it's best potential
+for (int c = 0; c < MemoryMapped::pageSize * 10; ++c) {
+    for (int r = 0; r < MemoryMapped::pageCount / 2; ++r) {
+        file[r * MemoryMapped::pageSize + c] = file[r * MemoryMapped::pageSize + c + (MemoryMapped::pageCount / 2 + 1) * (MemoryMapped::pageSize * 10)];
+    }
+}
+END_TEST
+
+START_TEST(random_move)
+uniform_int_distribution<uint64_t> dist(0, fileSize - 1);
+for (int c = 0; c < 100000; ++c) {
+    file[dist(rnd)] = file[dist(rnd)];
+}
+END_TEST
 
 
 int main() {
@@ -120,18 +136,20 @@ int main() {
         test_forward_read();
         test_backward_read();
 
-        test_stride_forward_read();
-        test_stride_backward_read();
-        
-        test_forward_write();
-        test_backward_write();
+        //test_stride_forward_read();
+        //test_stride_backward_read();
+        //
+        //test_forward_write();
+        //test_backward_write();
 
-        test_stride_forward_write();
-        test_stride_backward_write();
+        //test_stride_forward_write();
+        //test_stride_backward_write();
 
-        test_random_read_100000();
-        test_random_write_100000();
+        //test_random_read_100000();
+        //test_random_write_100000();
 
+        //test_sequential_move();
+        //test_random_move();
     } catch (std::exception & e) {
         std::cerr << e.what() << std::endl;
     }
