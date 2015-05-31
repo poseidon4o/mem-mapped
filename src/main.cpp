@@ -6,6 +6,10 @@
 using namespace std;
 using namespace std::chrono;
 
+random_device dev;
+mt19937 rnd(dev());
+
+char writeSeed = dev() % 255;
 
 
 #define START_TEST(MESSAGE)\
@@ -63,21 +67,21 @@ END_TEST
 
 START_TEST(forward_write)
 for (uint64_t c = 0; c < fileSize; ++c) {
-    file[c] = c % 255;
+    file[c] = writeSeed + c;
 }
 END_TEST
 
 START_TEST(backward_write)
 uint8_t x;
 for (uint64_t c = fileSize - 1; c > 0; --c) {
-    file[c] = c % 255;
+    file[c] = writeSeed + c;
 }
 END_TEST
 
 START_TEST(stride_forward_write)
 for (int r = 0; r < 10; ++r) {
     for (uint64_t c = 0; c + r < fileSize; c += MemoryMapped::pageSize) {
-        file[c + r] = c % 255;
+        file[c + r] = writeSeed + c;
     }
 }
 END_TEST
@@ -87,14 +91,12 @@ START_TEST(stride_backward_write)
 uint8_t x;
 for (int r = 0; r < 10; ++r) {
     for (uint64_t c = file.size() - 1; c - r > 0 && c - r < fileSize; c -= MemoryMapped::pageSize) {
-        file[c - r] = c % 255;
+        file[c - r] = writeSeed + c;
     }
 }
 END_TEST
 
 
-random_device dev;
-mt19937 rnd(dev());
 
 START_TEST(random_read_100000)
 uniform_int_distribution<uint64_t> dist(0, fileSize - 1);
@@ -107,7 +109,7 @@ END_TEST
 START_TEST(random_write_100000)
 uniform_int_distribution<uint64_t> dist(0, fileSize - 1);
 for (uint64_t c = 0; c < 100000; ++c) {
-    file[dist(rnd)] = c % 255;
+    file[dist(rnd)] = writeSeed + c;
 }
 END_TEST
 
