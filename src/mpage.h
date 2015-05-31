@@ -7,10 +7,9 @@ class PageItemProxy {
 public:
     PageItemProxy() = delete;
     PageItemProxy(const PageItemProxy &) = delete;
-    
+    PageItemProxy & operator=(const PageItemProxy &) = delete;
     PageItemProxy * operator&() = delete;
 
-    PageItemProxy & operator=(const PageItemProxy &);
     PageItemProxy & operator=(const uint8_t & value);
     operator uint8_t&();
     operator uint8_t() const;

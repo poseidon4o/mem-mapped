@@ -13,11 +13,6 @@ PageItemProxy & PageItemProxy::operator=(const uint8_t & value)
     return *this;
 }
 
-PageItemProxy & PageItemProxy::operator = (const PageItemProxy & other)
-{
-    return *this = static_cast<const uint8_t>(other);
-}
-
 PageItemProxy::operator uint8_t&()
 {
     MemoryPage & page = reinterpret_cast<MemoryPage&>(*this);
