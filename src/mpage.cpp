@@ -4,6 +4,10 @@
 PageItemProxy & PageItemProxy::operator=(const uint8_t & value)
 {
     MemoryPage & page = reinterpret_cast<MemoryPage&>(*this);
+    if (value == page.m_Data[page.m_ProxyIndex]) {
+        return *this;
+    }
+
     page.m_Data[page.m_ProxyIndex] = value;
     page.m_Dirty = true;
     return *this;
