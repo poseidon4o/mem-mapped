@@ -12,7 +12,7 @@
 
 class MemoryMapped {
 public:
-    MemoryMapped(const std::string fileName);
+    MemoryMapped(const std::string fileName, int pageSize = 1 << 20, int pageCount = 4);
     ~MemoryMapped();
 
     MemoryMapped(const MemoryMapped &) = delete;
@@ -21,14 +21,14 @@ public:
     PageItemProxy & operator[](uint64_t index);
     void flush();
 
-    const uint64_t size() const;
+    uint64_t size() const;
+    int pageSize() const;
+    int pageCount() const;
     operator bool();
 
 
 
-    const static int pageSize = 4096;
-    const static int pageCount = 8;
-protected:
+private:
     void map(uint64_t from);
 
     typedef int PageIndex;
@@ -42,12 +42,15 @@ protected:
 
 
 private:
+    const int m_PageSize;
+    const int m_PageCount;
+
     ChunkAllocator m_Allocator;
 
     std::string m_FileName;
     FILE * m_File;
-    MemoryPage m_Pages[MemoryMapped::pageCount];
-    PageIndex m_PageUse[MemoryMapped::pageCount];
+    std::unique_ptr<MemoryPage[]> m_Pages;
+    std::unique_ptr<PageIndex[]> m_PageUse;
     int m_UsedPages;
     uint64_t m_FileSize;
 };
