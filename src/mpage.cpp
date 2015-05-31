@@ -13,12 +13,22 @@ PageItemProxy & PageItemProxy::operator=(const uint8_t & value)
     return *this;
 }
 
-PageItemProxy::operator uint8_t()
+PageItemProxy & PageItemProxy::operator = (const PageItemProxy & other)
+{
+    return *this = static_cast<const uint8_t>(other);
+}
+
+PageItemProxy::operator uint8_t&()
 {
     MemoryPage & page = reinterpret_cast<MemoryPage&>(*this);
     return page.m_Data[page.m_ProxyIndex];
 }
 
+PageItemProxy::operator uint8_t() const
+{
+    const MemoryPage & page = reinterpret_cast<const MemoryPage&>(*this);
+    return page.m_Data[page.m_ProxyIndex];
+}
 
 MemoryPage::MemoryPage() :
     m_Data(nullptr), m_Size(0), m_Start(0), m_Dirty(false)
