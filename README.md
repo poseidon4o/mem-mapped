@@ -1,6 +1,6 @@
 # mem-mapped
 
-Windows specific memory mapped file implementation. The main goal is speed in singl threaded usage.
+Windows specific memory mapped file implementation. The main goal is speed in single threaded usage.
 
 ### Strong sides
  - Write to disk will happen only when data is actually changed
