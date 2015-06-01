@@ -162,8 +162,26 @@ void test_multiple_reads() {
     cout << "\nSecond read " << dur << "ms" << endl;
 }
 
+void command_line_test(char * argv[]) {
+    MemoryMapped file(argv[1]);
+    char newSymbol = argv[2][0];
+    auto fileSize = file.size();
+
+    auto start = high_resolution_clock::now();
+    for (uint64_t c = 0; c < fileSize; ++c) {
+        file[c] = newSymbol;
+    }
+    auto end = high_resolution_clock::now();
+    auto dur = duration_cast<milliseconds>(end - start).count();
+    std::cout << dur;
+}
 
 int main(int argc, char * argv[]) {
+    if (argc == 3) {
+        command_line_test(argv);
+        return 0;
+    }
+
     if (argc == 2) {
         fileName = argv[1];
     }
