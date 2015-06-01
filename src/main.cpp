@@ -74,7 +74,6 @@ for (uint64_t c = 0; c < fileSize; ++c) {
 END_TEST
 
 START_TEST(backward_write)
-uint8_t x;
 for (uint64_t c = fileSize - 1; c > 0; --c) {
     file[c] = rndChar(rnd) + c;
 }
@@ -90,7 +89,6 @@ END_TEST
 
 
 START_TEST(stride_backward_write)
-uint8_t x;
 for (int r = 0; r < 10; ++r) {
     for (uint64_t c = file.size() - 1; c - r > 0 && c - r < fileSize; c -= pageSize) {
         file[c - r] = rndChar(rnd) + c;
