@@ -26,18 +26,8 @@ PageItemProxy::operator uint8_t() const
 }
 
 MemoryPage::MemoryPage() :
-    m_Data(nullptr), m_Size(0), m_Start(0), m_Dirty(false)
+    m_Data(nullptr), m_Size(0), m_Start(nullptr), m_Dirty(false)
 {
-}
-
-int MemoryPage::size() const
-{
-    return m_Size;
-}
-
-uint64_t MemoryPage::start() const
-{
-    return m_Start;
 }
 
 bool MemoryPage::dirty() const
@@ -47,7 +37,7 @@ bool MemoryPage::dirty() const
 
 void MemoryPage::reset(int start, int size)
 {
-    m_Start = start;
+    *m_Start = start;
     m_Size = size;
     m_Dirty = false;
 }
@@ -65,5 +55,5 @@ PageItemProxy & MemoryPage::relative(uint64_t idx)
 
 PageItemProxy & MemoryPage::absolute(uint64_t idx)
 {
-    return relative(idx - m_Start);
+    return relative(idx - *m_Start);
 }

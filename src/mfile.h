@@ -34,7 +34,8 @@ private:
     typedef int PageIndex;
     const static PageIndex InvalidPage = PageIndex(-1);
 
-    PageIndex indexToPage(uint64_t idx);
+    PageIndex indexToPage(const uint64_t & idx) const;
+
     PageIndex mapCandidate();
     void touchPage(PageIndex idx);
 
@@ -42,17 +43,19 @@ private:
 
 
 private:
+    uint64_t m_FileSize;
+    int m_UsedPages;
+    std::unique_ptr<uint64_t[]> m_PageStartIndecies;
+    std::unique_ptr<PageIndex[]> m_PageUse;
+    std::unique_ptr<MemoryPage[]> m_Pages;
+
+    
     const int m_PageSize;
     const int m_PageCount;
-
-    ChunkAllocator m_Allocator;
-
-    std::string m_FileName;
+    
     FILE * m_File;
-    std::unique_ptr<MemoryPage[]> m_Pages;
-    std::unique_ptr<PageIndex[]> m_PageUse;
-    int m_UsedPages;
-    uint64_t m_FileSize;
+    std::string m_FileName;
+    ChunkAllocator m_Allocator;
 };
 
 #endif // _MFILE_H_INCLUDED_

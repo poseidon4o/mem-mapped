@@ -25,11 +25,13 @@ class MemoryPage {
     PageItemProxy & relative(uint64_t idx);
     PageItemProxy & absolute(uint64_t idx);
 
-    int size() const;
+    inline const int & size() const { return m_Size; }
+    inline const uint64_t & start() const { return *m_Start; };
     bool dirty() const;
-    uint64_t start() const;
+    
 
     void reset(int start, int size);
+    void setStart(uint64_t * start) { m_Start = start; }
 
     // Unsafe - does not update dirty flag
     uint8_t *& data();
@@ -38,12 +40,15 @@ class MemoryPage {
     MemoryPage & operator=(const MemoryPage &) = delete;
 
 private:
-    uint8_t * m_Data;
-    int m_Size, m_Start;
 
     // Since this is single threaded use only we can store the last access index
     // and the proxy can be zero-sized
     int m_ProxyIndex;
+    int m_Size;
+
+    
+    uint8_t * m_Data;
+    uint64_t * m_Start;
 
     bool m_Dirty;
 };

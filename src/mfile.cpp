@@ -5,7 +5,7 @@
 MemoryMapped::MemoryMapped(const std::string fileName, int pageSize, int pageCount) :
     m_FileName(std::move(fileName)), m_File(nullptr), m_UsedPages(0),
     m_Allocator(pageSize, pageCount), m_PageSize(pageSize), m_PageCount(pageCount),
-    m_Pages(new MemoryPage[pageCount]), m_PageUse(new PageIndex[pageCount])
+    m_Pages(new MemoryPage[pageCount]), m_PageUse(new PageIndex[pageCount]), m_PageStartIndecies(new uint64_t[pageCount])
 {
     m_File = fopen(m_FileName.c_str(), "rb+");
     if (!m_File) {
@@ -13,14 +13,16 @@ MemoryMapped::MemoryMapped(const std::string fileName, int pageSize, int pageCou
     }
 
     setvbuf(m_File, NULL, _IONBF, 0);
-    fseek(m_File, 0, SEEK_END);
+    _fseeki64(m_File, 0, SEEK_END);
 
     fpos_t size;
     fgetpos(m_File, &size);
     m_FileSize = size;
 
+
     for (int c = 0; c < m_PageCount; ++c) {
         m_PageUse[c] = PageIndex(c);
+        m_Pages[c].setStart(&m_PageStartIndecies[c]);
     }
 }
 
@@ -32,6 +34,9 @@ MemoryMapped::~MemoryMapped()
 
 PageItemProxy & MemoryMapped::operator[](uint64_t index)
 {
+    if (index > m_FileSize) {
+        throw std::exception("Out of file");
+    }
     PageIndex page = indexToPage(index);
     if (page == InvalidPage) {
         map(index);
@@ -62,7 +67,7 @@ int MemoryMapped::pageCount() const
 
 MemoryMapped::operator bool()
 {
-    return m_File;
+    return m_File != nullptr;
 }
 
 void MemoryMapped::flush()
@@ -77,7 +82,7 @@ void MemoryMapped::flush()
 void MemoryMapped::flushPage(PageIndex idx)
 {
     MemoryPage & page = m_Pages[idx];
-    fseek(m_File, page.m_Start, SEEK_SET);
+    _fseeki64(m_File, page.start(), SEEK_SET);
     if (page.size() != fwrite(page.data(), 1, page.size(), m_File)) {
         throw std::exception("Failed to flush file to disk");
     }
@@ -105,48 +110,45 @@ void MemoryMapped::map(uint64_t from)
 
     uint64_t mapSize = std::min<uint64_t>(m_PageSize, m_FileSize - from);
     page.reset(from, mapSize);
-    fseek(m_File, from, SEEK_SET);
+    _fseeki64(m_File, from, SEEK_SET);
 
     if (fread(page.data(), 1, mapSize, m_File) != mapSize) {
         throw std::exception("Failed to map file in memory");
     }
-    m_UsedPages = std::max<uint64_t>(m_UsedPages + 1, m_PageCount);
+    m_UsedPages = std::min<uint64_t>(m_UsedPages + 1, m_PageCount);
 }
 
-void MemoryMapped::touchPage(PageIndex idx)
+MemoryMapped::PageIndex MemoryMapped::indexToPage(const uint64_t & idx) const
 {
-    // start from last used - better chance of nop
-    for (int c = m_PageCount - 1; c >= 0; --c) {
-        if (idx == m_PageUse[c]) {
-            for (int r = c; r < m_PageCount - 1; ++r) {
-                std::swap(m_PageUse[r], m_PageUse[r + 1]);
-            }
-            break;
+    for (PageIndex c = 0; c < m_UsedPages; ++c) {
+        if (idx >= m_PageStartIndecies[c] && idx < m_PageStartIndecies[c] + m_PageSize) {
+            return c;
         }
     }
+    return InvalidPage;
 }
-
 
 MemoryMapped::PageIndex MemoryMapped::mapCandidate()
 {
     return m_UsedPages >= m_PageCount ?
 
-        m_PageUse[0] :
+        m_PageUse[m_PageCount - 1] :
 
         // handle the case when there is a free page
         *std::find_if(m_PageUse.get(), m_PageUse.get() + m_PageCount, [this](PageIndex idx) {
-            return !this->m_Pages[idx].dirty();
+            return !this->m_Pages[idx].data();
         });
 }
 
-MemoryMapped::PageIndex MemoryMapped::indexToPage(uint64_t idx)
+void MemoryMapped::touchPage(PageIndex idx)
 {
-    for (PageIndex c = m_PageCount - 1; c >= 0; --c) {
-        uint64_t start = m_Pages[c].start();
-        uint64_t end = start + m_Pages[c].size();
-        if (idx >= start && idx < end) {
-            return c;
+    // start from last used - better chance of nop
+    for (int c = 0; c < m_UsedPages; ++c) {
+        if (idx == m_PageUse[c]) {
+            for (int r = c; r > 0; --r) {
+                std::swap(m_PageUse[r], m_PageUse[r - 1]);
+            }
+            break;
         }
     }
-    return InvalidPage;
 }
